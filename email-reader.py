@@ -24,14 +24,26 @@ class Order:
         body = body[body.find('{'): body.find('}') + 1]
 
         self.order_number = msgid
-        self.order_dict = json.loads(body)
+        self.can_print = True
+
+        try:
+            self.order_dict = json.loads(body)
+        except:
+            self.order_dict = {}
+            self.can_print = False
+
         self.date = email_message.get('Date')
 
     def print_order(self):
         printing.print_line("Order #", self.order_number)
-        for k, v in self.order_dict.items():
-            printing.print_line(k, v)
+        if self.can_print:
+            for k, v in self.order_dict.items():
+                printing.print_line(k, v)
+        else:
+            printing.print_text_line("Order not formatted correctly")
+
         printing.print_blank()
+
 
 
 def run_service(today, orderTimes, username, password):
@@ -48,7 +60,7 @@ def run_service(today, orderTimes, username, password):
         while can_order:
             print("")
             print("Reading Orders")
-            new_messages = client.search([['FROM', 'cornellpikesorders@gmail.com'], ['SINCE', today - timedelta(days = 1)]])
+            new_messages = client.search([['FROM', 'cornellpikesorders@gmail.com']])
             for msgid, raw_email in client.fetch(new_messages, 'RFC822').items():
                 new_order = Order(msgid, raw_email)
                 new_order.print_order()
